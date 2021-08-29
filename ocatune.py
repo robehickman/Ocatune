@@ -11,8 +11,8 @@ import numpy as np
 #=================================================
 # Config data
 #=================================================
-input_device_index  = 5
-output_device_index = 10
+input_device_index  = 0
+output_device_index = 0
 
 sample_format           = pyaudio.paInt16
 
@@ -202,13 +202,67 @@ def pitch_detection_thread():
 
 
 #---------------------------------------------------------
+def select_devices():
+    global p
+
+    devices = {}
+
+    for i in range(p.get_device_count()):
+        devices[i] = p.get_device_info_by_index(i)
+
+
+    #========================================
+    print("Input Devices:")
+    for k in devices:
+        if devices[k]['maxInputChannels'] > 0:
+            if devices[k]['maxInputChannels'] < 2: continue
+
+            print(str(k) + ' - ' + devices[k]['name'])
+    print()
+
+    index_input = None
+    while True:
+        index_input = input('Select input device > ')
+        index_input = int(index_input)
+        if index_input in devices:
+            break
+    print()
+    print()
+
+    #========================================
+    print("Output Devices:")
+    for k in devices:
+        if devices[k]['maxOutputChannels'] > 0:
+            if devices[k]['maxOutputChannels'] < 2: continue
+            print(str(k) + ' - ' + devices[k]['name'])
+    print()
+
+    index_output = None
+    while True:
+        index_output = input('Select output device > ')
+        index_output = int(index_output)
+        if index_output in devices:
+            break
+    print()
+    print()
+
+    #========================================
+    global input_device_index, output_device_index, input_sample_rate, output_sample_rate
+
+    input_device_index  = index_input
+    output_device_index = index_output
+    input_sample_rate   = int(devices[index_input]['defaultSampleRate'])
+    output_sample_rate  = int(devices[index_output]['defaultSampleRate'])
+
+
+#---------------------------------------------------------
 def init_audio():
     global p, input_stream, output_stream, listening_thread, playing_thread
 
     p = pyaudio.PyAudio()  # Create an interface to PortAudio
 
-    #for i in range(p.get_device_count()):
-    #    pprint(p.get_device_info_by_index(i))
+    select_devices()
+
 
     # =================================================
     input_stream = p.open(format             = sample_format,
